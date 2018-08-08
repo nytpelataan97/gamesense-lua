@@ -15,6 +15,7 @@ local ent = {
 }
 
 local cl = {
+	indicator = client.draw_indicator,
 	draw = client.draw_text,
 	size = client.screen_size,
 	latency = client.latency,
@@ -24,72 +25,61 @@ local cl = {
 local flag, flag_hotkey = interface.ref("AA", "Fake lag", "Enabled")
 local slowmo, slowmo_hotkey = interface.ref("AA", "Other", "Slow motion")
 local pingspike, pingspike_hotkey = interface.ref("MISC", "Miscellaneous", "Ping spike")
-local override, override_hotkey = interface.ref("RAGE", "Other", "Anti-aim resolver override")
 
-local apr_ref = interface.ref("AA", "Fake Lag", "Enabled")
 local apr_active = interface.checkbox("MISC", "Miscellaneous", "Anti pingspike reset")
 local apr_maximum = interface.slider("MISC", "Miscellaneous", "Maximum ping", 1, 750, 250, true, "ms")
 
-local m_iLatency = 0
-local m_iOverride = 0
-local sw, sh = cl.size()
-local x, y = sw / 2, sh - 350
-local y = y + 323
-
-local function clamp(int, max)
-	return int > max and max or int
-end
-
 local function getlatency()
-	local var = ent.get_prop(ent.get_all("CCSPlayerResource")[1], string.format("%03d", ent.get_local()))
-	return clamp(var, 999)
+	local g_ServerLatency = ent.get_prop(ent.get_all("CCSPlayerResource")[1], string.format("%03d", ent.get_local()))
+	local g_RealLatency = math.floor(math.min(1000, cl.latency() * 1000) + 0.5)
+
+	g_ServerLatency = (g_ServerLatency > 999 and 999 or g_ServerLatency)
+
+	local g_DeclLatency = g_ServerLatency - g_RealLatency
+	if g_DeclLatency < 1 then g_DeclLatency = 1 end
+
+	return g_ServerLatency, g_RealLatency, g_DeclLatency
 end
 
-function get_velocity()
-	local vel_x = ent.get_prop(ent.get_local(), "m_vecVelocity[0]")
-	local vel_y = ent.get_prop(ent.get_local(), "m_vecVelocity[1]")
-	local vel_z = ent.get_prop(ent.get_local(), "m_vecVelocity[2]")
-	
-	return math.sqrt(vel_x * vel_x + vel_y * vel_y + vel_z * vel_z)
+local function setMath(int, max, declspec)
+	local int = (int > max and max or int)
+
+	local tmp = max / int;
+	local i = (declspec / tmp)
+	i = (i >= 0 and math.floor(i + 0.5) or math.ceil(i - 0.5))
+
+	return i
 end
 
-local function HSVToRGB(h, s, v)
-  local r, g, b
-  local i = math.floor(h * 6)
-  local f = h * 6 - i
-  local p = v * (1 - s)
-  local q = v * (1 - f * s)
-  local t = v * (1 - (1 - f) * s)
-  i = i % 6
-  if i == 0 then r, g, b = v, t, p
-     elseif i == 1 then r, g, b = q, v, p
-     elseif i == 2 then r, g, b = p, v, t
-     elseif i == 3 then r, g, b = p, q, v
-     elseif i == 4 then r, g, b = t, p, v
-     elseif i == 5 then r, g, b = v, p, q
-  end
+local function getColor(number, max)
+	local r, g, b
+	i = setMath(number, max, 9)
 
-  return r * 255, g * 255, b * 255
+	if i == 9 then r, g, b = 255, 0, 0
+		elseif i == 8 then r, g, b = 237, 27, 3
+		elseif i == 7 then r, g, b = 235, 63, 6
+		elseif i == 6 then r, g, b = 229, 104, 8
+		elseif i == 5 then r, g, b = 228, 126, 10
+		elseif i == 4 then r, g, b = 220, 169, 16
+		elseif i == 3 then r, g, b = 213, 201, 19
+		elseif i == 2 then r, g, b = 176, 205, 10
+		elseif i <= 1 then r, g, b = 124, 195, 13
+	end
+
+	return r, g, b
 end
 
-local function lerp(h1, s1, v1, h2, s2, v2, t)
-	local h = (h2 - h1) * t + h1
-	local s = (s2 - s1) * t + s1
-	local v = (v2 - v1) * t + v1
-	return h, s, v
-end
-
-local function isActive(ping)
-	return interface.get(apr_active) and not (interface.get(apr_maximum) > ping)
+local function isActive(ping, warn)
+	if warn == 0 then
+		return interface.get(apr_active) and not (interface.get(apr_maximum) > ping)
+	else
+		return interface.get(apr_active) and not interface.get(pingspike_hotkey) and (interface.get(apr_maximum) <= ping)
+	end
 end
 
 local function visibility(this)
 	local v = interface.get(this)
 	interface.visible(apr_maximum, v)
-end
-
-local function getIndYaw(y, cNum)
-	return (y - (30 * cNum))
 end
 
 interface.s_callback(apr_active, visibility)
@@ -99,66 +89,29 @@ local function on_paint(c)
 		return
 	end
 
-	local shoudDraw = 0
-	local ping = getlatency()
-	local r_ping = math.floor(math.min(1000, cl.latency() * 1000) + 0.5);
-	
-	local cl_ping = ping - r_ping
-	if cl_ping < 1 then cl_ping = 1 end
-	
-	local maxNum = interface.get(apr_maximum)
-	local h, s, v = lerp(0, 1, 1, 120, 1, 1, 1000 - (clamp(cl_ping, maxNum) * (1/maxNum)))
-	local r, g, b = HSVToRGB(h/360, s, v)
+	local alpha = 255
+	local g_rLat, g_sLat, g_dLat = getlatency()
+	local r, g, b = getColor(g_dLat, 350)
 	
 	if interface.get(apr_active) then
-		interface.set(apr_ref, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= ping))
+		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= g_rLat))
 	end
 	
-	if interface.get(apr_ref) and not isActive(ping) then		
-		shoudDraw = 1
-	else
-		local isr = 0
-		r = 255
-		g = 255
-		b = 255
-		
-		if interface.get(apr_active) then
-			if not interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= ping then
-				isr = 1
+	if not (interface.get(flag) and not isActive(g_rLat, 0)) then	
+		r, g, b = 255, 255, 255
+
+		local tickcount = (cl.tickcount() % 127.5)
+		if isActive(g_rLat, 1) then
+			if tickcount > 63.75 then
+				alpha = 255 - (tickcount * 4)
+			else
+				alpha = tickcount * 4
 			end
 		end
-		
-		if isr == 1 then
-			
-			local ticknum = 70
-			local tickcount = (cl.tickcount() % ticknum)
-			
-			if tickcount >= (ticknum / 2) then 
-				shoudDraw = 1
-			end
-		else
-			shoudDraw = 1
-		end
-	end
-	
-	if get_velocity() > 0 and not interface.get(slowmo_hotkey) and not interface.get(pingspike_hotkey) then
-		m_iLatency = 83 -- Latency X Position
-	else
-		m_iLatency = 105 -- Latency X Position
-	end
-	
-	if shoudDraw == 1 then
-		cl.draw(c, m_iLatency, getIndYaw(y, 1), r, g, b, 255, "c+", 0, "NA") -- Lag Factor IND
+
 	end
 
---[[
-	if interface.get(override_hotkey) then
-		cl.draw(c, m_iLatency, getIndYaw(y, 2), 124, 195, 13, 255, "c+", 0, "OR") 
-	else
-	 	cl.draw(c, m_iLatency, getIndYaw(y, 2), 255, 0, 0, 255, "c+", 0, "OR")
-	end
---]]
-
+	cl.indicator(c, r, g, b, alpha, "LAG") -- Lag Factor
 end
 
 client.set_event_callback("paint", on_paint)
