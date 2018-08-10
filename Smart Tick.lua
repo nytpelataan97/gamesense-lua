@@ -111,7 +111,11 @@ local function on_paint(c)
 
 	end
 
-	cl.indicator(c, r, g, b, alpha, "LAG") -- Lag Factor
+	local m = setMath(g_dLat, 250, 20)
+
+	if m > 0 then
+		cl.indicator(c, r, g, b, alpha, m) -- Lag Factor
+	end
 end
 
 client.set_event_callback("paint", on_paint)
