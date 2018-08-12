@@ -105,10 +105,10 @@ end
 
 -- Event Functions
 
-local l, timechange, release_at = 0, 0, nil
+local factor, timechange, release_at = 0, 0, nil
 local function on_item_equip(e)
 	local userid, canzoom, item = e.userid, e.canzoom, e.item
-	if userid == nil or l < 1 then return end
+	if userid == nil or factor < 1 then return end
 	if cl.ute(userid) == ent.get_local() then
 		if item == "scar20" or item == "sg556" then
 			cl.exec("-attack2; -lookatweapon; +attack2; +lookatweapon")
@@ -135,14 +135,14 @@ local function on_paint(c)
 	end
 
 	local pNum, d = setMath(g_dLat, 250, 100)
-	if l ~= pNum and timechange < cl.realtime() then
-		if l > pNum then d = -1 else d = 1 end
+	if factor ~= pNum and timechange < cl.realtime() then
+		if factor > pNum then d = -1 else d = 1 end
 		
 		timechange = cl.realtime() + 0.05
-		l = l + d
+		factor = factor + d
 	end
 
-	local r, g, b = getColor(l, 100)
+	local r, g, b = getColor(factor, 100)
 	if not (interface.get(flag) and not isActive(g_rLat, 0)) then	
 		r, g, b = 255, 255, 255
 
@@ -157,9 +157,9 @@ local function on_paint(c)
 
 	end
 
-	if l >= 1 then
-		local y = cl.indicator(c, r, g, b, alpha, "LAG") -- Lag Factor
-		draw_indicator_circle(c, 75, (y + 14), 124, 195, 13, alpha, l / 100)
+	if factor >= 1 then
+		local y = cl.indicator(c, 255, 255, 255, alpha, "LAG") -- Lag Factor
+		draw_indicator_circle(c, 75, (y + 14), r, g, b, alpha, factor / 100)
 
 		if release_at ~= nil and release_at < cl.realtime() then
 			release_at = nil
