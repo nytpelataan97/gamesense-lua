@@ -19,7 +19,8 @@ local cl = {
 	draw = client.draw_text,
 	size = client.screen_size,
 	latency = client.latency,
-	tickcount =  globals.tickcount
+	tickcount = globals.tickcount,
+	curtime = globals.curtime
 }
 
 local flag, flag_hotkey = interface.ref("AA", "Fake lag", "Enabled")
@@ -84,6 +85,7 @@ end
 
 interface.s_callback(apr_active, visibility)
 
+local i, timechange = 0, 0
 local function on_paint(c)
 	if ent.get_prop(ent.get_local(), "m_iHealth") <= 0 then
 		return
@@ -91,12 +93,20 @@ local function on_paint(c)
 
 	local alpha = 255
 	local g_rLat, g_sLat, g_dLat = getlatency()
-	local r, g, b = getColor(g_dLat, 350)
-	
+
 	if interface.get(apr_active) then
 		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= g_rLat))
 	end
-	
+
+	local pNum, d = setMath(g_dLat, 250, 20)
+	if i ~= pNum and timechange < cl.curtime() then
+		if i > pNum then d = -1 else d = 1 end
+		
+		timechange = cl.curtime() + 0.2
+		i = i + d
+	end
+
+	local r, g, b = getColor(i, 20)
 	if not (interface.get(flag) and not isActive(g_rLat, 0)) then	
 		r, g, b = 255, 255, 255
 
@@ -111,10 +121,8 @@ local function on_paint(c)
 
 	end
 
-	local m = setMath(g_dLat, 250, 20)
-
-	if m > 0 then
-		cl.indicator(c, r, g, b, alpha, m) -- Lag Factor
+	if i > 0 then
+		cl.indicator(c, r, g, b, alpha, i) -- Lag Factor
 	end
 end
 
