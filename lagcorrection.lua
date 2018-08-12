@@ -61,7 +61,7 @@ end
 
 local function getColor(number, max)
 	local r, g, b
-	i = setMath(number, max, 9)
+	local i = setMath(number, max, 9)
 
 	if i == 9 then r, g, b = 255, 0, 0
 		elseif i == 8 then r, g, b = 237, 27, 3
