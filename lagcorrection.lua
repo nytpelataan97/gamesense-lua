@@ -158,7 +158,14 @@ local function on_paint(c)
 	end
 
 	if factor >= 1 then
-		local y = cl.indicator(c, 255, 255, 255, alpha, "LAG") -- Lag Factor
+
+		if interface.get(pingspike_hotkey) then
+			lr, lg, lb = 255, 255, 255
+		else
+			lr, lg, lb = 255, 0, 0
+		end
+
+		local y = cl.indicator(c, lr, lg, lb, alpha, "LAG") -- Lag Factor
 		draw_indicator_circle(c, 75, (y + 14), r, g, b, alpha, factor / 100)
 
 		if release_at ~= nil and release_at < cl.realtime() then
