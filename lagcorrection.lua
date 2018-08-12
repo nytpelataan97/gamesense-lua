@@ -91,10 +91,10 @@ end
 
 -- Event Functions
 
-local i, timechange = 0, 0
+local l, timechange = 0, 0
 local function on_item_equip(e)
 	local userid, canzoom, item = e.userid, e.canzoom, e.item
-	if userid == nil or i < 1 then return end
+	if userid == nil or l < 1 then return end
 	if cl.ute(userid) == ent.get_local() then
 		if item == "scar20" or item == "sg556" then
 			cl.exec("-attack2; -lookatweapon; +attack2; +lookatweapon")
@@ -115,19 +115,16 @@ local function on_paint(c)
 
 	local alpha = 255
 	local g_rLat, g_sLat, g_dLat = getlatency()
-	if interface.get(apr_active) then
-		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= g_rLat))
-	end
 
 	local pNum, d = setMath(g_dLat, 250, 20)
-	if i ~= pNum and timechange < cl.curtime() then
-		if i > pNum then d = -1 else d = 1 end
+	if l ~= pNum and timechange < cl.realtime() then
+		if l > pNum then d = -1 else d = 1 end
 		
-		timechange = cl.curtime() + 0.2
-		i = i + d
+		timechange = cl.realtime() + 0.2
+		l = l + d
 	end
 
-	local r, g, b = getColor(i, 20)
+	local r, g, b = getColor(l, 20)
 	if not (interface.get(flag) and not isActive(g_rLat, 0)) then	
 		r, g, b = 255, 255, 255
 
@@ -142,8 +139,8 @@ local function on_paint(c)
 
 	end
 
-	if i >= 1 then
-		cl.indicator(c, r, g, b, alpha, i) -- Lag Factor
+	if l >= 1 then
+		cl.indicator(c, r, g, b, alpha, l) -- Lag Factor
 
 		if release_at ~= nil and release_at < cl.realtime() then
 			release_at = nil
