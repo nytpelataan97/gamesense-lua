@@ -2,7 +2,7 @@ local interface = {
 	get = ui.get,
 	set = ui.set,
 	ref = ui.reference,
-	s_callback = ui.set_callback,
+	callback = ui.set_callback,
 	checkbox = ui.new_checkbox,
 	visible = ui.set_visible,
 	slider = ui.new_slider
@@ -18,11 +18,15 @@ local cl = {
 	indicator = client.draw_indicator,
 	draw = client.draw_text,
 	size = client.screen_size,
+	exec = client.exec,
+	ute = client.userid_to_entindex,
 	latency = client.latency,
 	tickcount = globals.tickcount,
-	curtime = globals.curtime
+	curtime = globals.curtime,
+	realtime = globals.realtime
 }
 
+local release_at = nil
 local flag, flag_hotkey = interface.ref("AA", "Fake lag", "Enabled")
 local slowmo, slowmo_hotkey = interface.ref("AA", "Other", "Slow motion")
 local pingspike, pingspike_hotkey = interface.ref("MISC", "Miscellaneous", "Ping spike")
@@ -31,7 +35,9 @@ local apr_active = interface.checkbox("MISC", "Miscellaneous", "Anti pingspike r
 local apr_maximum = interface.slider("MISC", "Miscellaneous", "Maximum ping", 1, 750, 250, true, "ms")
 
 local function getlatency()
-	local g_ServerLatency = ent.get_prop(ent.get_all("CCSPlayerResource")[1], string.format("%03d", ent.get_local()))
+
+	local prop = ent.get_all("CCSPlayerResource")[1]
+	local g_ServerLatency = ent.get_prop(prop, string.format("%03d", ent.get_local()))
 	local g_RealLatency = math.floor(math.min(1000, cl.latency() * 1000) + 0.5)
 
 	g_ServerLatency = (g_ServerLatency > 999 and 999 or g_ServerLatency)
@@ -40,6 +46,7 @@ local function getlatency()
 	if g_DeclLatency < 1 then g_DeclLatency = 1 end
 
 	return g_ServerLatency, g_RealLatency, g_DeclLatency
+	
 end
 
 local function setMath(int, max, declspec)
@@ -79,13 +86,28 @@ local function isActive(ping, warn)
 end
 
 local function visibility(this)
-	local v = interface.get(this)
-	interface.visible(apr_maximum, v)
+	interface.visible(apr_maximum, interface.get(this))
 end
 
-interface.s_callback(apr_active, visibility)
+-- Event Functions
 
 local i, timechange = 0, 0
+local function on_item_equip(e)
+	local userid, canzoom, item = e.userid, e.canzoom, e.item
+	if userid == nil or i < 1 then return end
+	if cl.ute(userid) == ent.get_local() then
+		if item == "scar20" or item == "sg556" then
+			cl.exec("-attack2; -lookatweapon; +attack2; +lookatweapon")
+			release_at = cl.realtime() + 0.1
+		else
+			if release_at ~= nil then
+				cl.exec("-attack2; -lookatweapon")
+				release_at = nil
+			end
+		end
+	end
+end
+
 local function on_paint(c)
 	if ent.get_prop(ent.get_local(), "m_iHealth") <= 0 then
 		return
@@ -93,7 +115,6 @@ local function on_paint(c)
 
 	local alpha = 255
 	local g_rLat, g_sLat, g_dLat = getlatency()
-
 	if interface.get(apr_active) then
 		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= g_rLat))
 	end
@@ -121,9 +142,16 @@ local function on_paint(c)
 
 	end
 
-	if i > 0 then
+	if i >= 1 then
 		cl.indicator(c, r, g, b, alpha, i) -- Lag Factor
+
+		if release_at ~= nil and release_at < cl.realtime() then
+			release_at = nil
+			cl.exec("-attack2; -lookatweapon; +lookatweapon; -lookatweapon")
+		end
 	end
 end
 
+interface.callback(apr_active, visibility)
 client.set_event_callback("paint", on_paint)
+client.set_event_callback("item_equip", on_item_equip)
