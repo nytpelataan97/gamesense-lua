@@ -16,6 +16,8 @@ local ent = {
 
 local cl = {
 	indicator = client.draw_indicator,
+	circle_outline = client.draw_circle_outline,
+
 	draw = client.draw_text,
 	size = client.screen_size,
 	exec = client.exec,
@@ -26,7 +28,6 @@ local cl = {
 	realtime = globals.realtime
 }
 
-local release_at = nil
 local flag, flag_hotkey = interface.ref("AA", "Fake lag", "Enabled")
 local slowmo, slowmo_hotkey = interface.ref("AA", "Other", "Slow motion")
 local pingspike, pingspike_hotkey = interface.ref("MISC", "Miscellaneous", "Ping spike")
@@ -85,13 +86,26 @@ local function isActive(ping, warn)
 	end
 end
 
+local function draw_indicator_circle(c, x, y, r, g, b, a, percentage, outline)
+    local outline = outline or true
+    local radius = 9
+    local start_degrees = 0
+
+    -- draw outline
+    if outline then
+        cl.circle_outline(c, x, y, 0, 0, 0, 200, radius, start_degrees, 1.0, 5)
+    end
+    -- draw inner circle
+    cl.circle_outline(c, x, y, r, g, b, 255, radius-1, start_degrees, percentage, 3)
+end
+
 local function visibility(this)
 	interface.visible(apr_maximum, interface.get(this))
 end
 
 -- Event Functions
 
-local l, timechange = 0, 0
+local l, timechange, release_at = 0, 0, nil
 local function on_item_equip(e)
 	local userid, canzoom, item = e.userid, e.canzoom, e.item
 	if userid == nil or l < 1 then return end
@@ -116,15 +130,19 @@ local function on_paint(c)
 	local alpha = 255
 	local g_rLat, g_sLat, g_dLat = getlatency()
 
-	local pNum, d = setMath(g_dLat, 250, 20)
+	if interface.get(apr_active) then
+		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_maximum) <= g_rLat))
+	end
+
+	local pNum, d = setMath(g_dLat, 250, 100)
 	if l ~= pNum and timechange < cl.realtime() then
 		if l > pNum then d = -1 else d = 1 end
 		
-		timechange = cl.realtime() + 0.2
+		timechange = cl.realtime() + 0.05
 		l = l + d
 	end
 
-	local r, g, b = getColor(l, 20)
+	local r, g, b = getColor(l, 100)
 	if not (interface.get(flag) and not isActive(g_rLat, 0)) then	
 		r, g, b = 255, 255, 255
 
@@ -140,7 +158,8 @@ local function on_paint(c)
 	end
 
 	if l >= 1 then
-		cl.indicator(c, r, g, b, alpha, l) -- Lag Factor
+		local y = cl.indicator(c, r, g, b, alpha, "LAG") -- Lag Factor
+		draw_indicator_circle(c, 75, (y + 14), 124, 195, 13, alpha, l / 100)
 
 		if release_at ~= nil and release_at < cl.realtime() then
 			release_at = nil
