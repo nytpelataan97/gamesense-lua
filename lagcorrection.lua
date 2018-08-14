@@ -147,8 +147,10 @@ local function on_paint(c)
 	if inArr(interface.get(apr_mselect), actions[1]) and not interface.get(flag) and interface.get(apr_pingthreshold) < latency_client then
 		r, g, b = 53, 110, 254
 	else
-		if inArr(interface.get(apr_mselect), actions[2]) and interface.get(apr_acthreshold) < latency_client then
-			r, g, b = 124, 195, 13
+		if inArr(interface.get(apr_mselect), actions[2]) and interface.get(apr_acthreshold) > 0 then
+			if interface.get(pingspike_hotkey) and interface.get(apr_acthreshold) < latency_decl then
+				r, g, b = 124, 195, 13
+			end
 		end
 	end
 
@@ -185,6 +187,8 @@ end
 local function visibility(this)
 	interface.visible(apr_mselect, interface.get(this))
 	interface.visible(apr_pingthreshold, interface.get(this))
+
+	-- Accuracy boost
 	interface.visible(apr_acthreshold, interface.get(this))
 	interface.visible(apr_acboost, interface.get(this))
 end
