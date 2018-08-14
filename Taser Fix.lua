@@ -17,11 +17,12 @@ local ent = {
 local Options = { "Off", "Delay shot", "Predict" }
 local LC = interface.ref("RAGE", "Other", "Fake lag correction")
 
-local isActive = ui.new_checkbox("RAGE", "Other", "Zeus bot fix")
-local DisableLC = ui.new_combobox("RAGE", "Other", "Lag correction", Options)
+local isActive = ui.new_checkbox("RAGE", "Other", "Zeus bot correction")
+local DisableLC = ui.new_combobox("RAGE", "Other", "Fake lag correction", Options)
 
 local function isVisible(this)
 	interface.visible(DisableLC, interface.get(this))
+	interface.visible(LC, not interface.get(this))
 end
 
 local function on_run_command(e)
