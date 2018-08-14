@@ -99,9 +99,9 @@ local pingspike, pingspike_hotkey = interface.ref("MISC", "Miscellaneous", "Ping
 local accuracyboost = interface.ref("RAGE", "Other", "Accuracy boost options")
 
 local ms = { "Refine shot", "Extended backtrack" }
-local actions = { "Fakelag trigger", "Accuracy boost correction" }
+local actions = { "Ping spike correction", "Accuracy boost correction" }
 
-local apr_active = interface.checkbox("MISC", "Miscellaneous", "Ping spike correction")
+local apr_active = interface.checkbox("MISC", "Miscellaneous", "Lag correction")
 local apr_mselect = interface.multiselect("MISC", "Miscellaneous", "Lag triggers", actions)
 local apr_pingthreshold = interface.slider("MISC", "Miscellaneous", "Ping spike threshold", 1, 750, 250, true, "ms")
 local apr_acthreshold = interface.slider("MISC", "Miscellaneous", "Accuracy boost threshold", 0, 450, 180, true, "ms")
