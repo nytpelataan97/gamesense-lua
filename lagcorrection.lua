@@ -145,11 +145,11 @@ local function on_paint(c)
 	end
 
 	if inArr(interface.get(apr_mselect), actions[1]) and not interface.get(flag) and interface.get(apr_pingthreshold) < latency_client then
-		r, g, b = 53, 110, 254
+		r, g, b = 124, 195, 13
 	else
 		if inArr(interface.get(apr_mselect), actions[2]) and interface.get(apr_acthreshold) > 0 then
 			if interface.get(pingspike_hotkey) and interface.get(apr_acthreshold) < latency_decl then
-				r, g, b = 124, 195, 13
+				r, g, b = 53, 110, 254
 			end
 		end
 	end
