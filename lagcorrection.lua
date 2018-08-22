@@ -109,20 +109,16 @@ local apr_acboost = interface.multiselect("MISC", "Miscellaneous", "Accuracy boo
 
 -- Event Functions
 
-local factor, timechange = 0, 0
+local factor, timechange, idm, lat_success, lat_old = 0, 0, 0, 0, 0
 local function on_paint(c)
 	if not interface.get(apr_active) or ent.get_prop(ent.get_local(), "m_iHealth") <= 0 then
 		return
 	end
 
-	local alpha = 255
+	local alpha, show = 255, 0
 	local latency_client, latency_server, latency_decl = getlatency()
-
-	if inArr(interface.get(apr_mselect), actions[1]) then
-		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_pingthreshold) <= latency_client))
-	end
-
 	local pNum, d = setMath(latency_decl, interface.get(apr_pingthreshold), 100)
+
 	if factor ~= pNum and timechange < cl.realtime() then
 		if factor > pNum then d = -1 else d = 1 end
 		
@@ -131,10 +127,22 @@ local function on_paint(c)
 	end
 
 	local r, g, b = getColor(factor, 100)
+	if factor >= 1 then show = 1 end
+
 	if not (interface.get(flag) and interface.get(apr_pingthreshold) > latency_client) then
 
 		local tickcount = (cl.tickcount() % 127.5)
 		if not interface.get(pingspike_hotkey) and (interface.get(apr_pingthreshold) <= latency_client) then
+			-- Indicator drops
+			if idm < cl.realtime() then 
+				idm = cl.realtime() + 1
+			end
+
+			r, g, b = 255, 0, 0
+			lat_success, show = 0, 1
+			factor = math.floor((idm - cl.realtime()) * 100)
+
+			-- Fade In/Out
 			if tickcount > 63.75 then
 				alpha = 255 - (tickcount * 4)
 			else
@@ -154,14 +162,26 @@ local function on_paint(c)
 		end
 	end
 
-	if factor >= 1 then
+	if show > 0 then
 		_r, _g, _b = 255, 255, 255
-		if not interface.get(pingspike_hotkey) then
-			_r, _g, _b = 255, 0, 0
-		end
 
+		if interface.get(pingspike_hotkey) and lat_success > latency_client then
+			_r, _g, _b = 235, 63, 6
+		else if not interface.get(pingspike_hotkey) then
+				_r, _g, _b = 255, 0, 0
+			end
+		end
+		
 		local y = cl.indicator(c, _r, _g, _b, alpha, "LAG") -- Lag Factor
 		draw_indicator_circle(c, 75, (y + 14), r, g, b, alpha, factor / 100)
+	end
+
+	if lat_old ~= latency_client then
+		if lat_old < latency_client then
+			lat_success = latency_client
+		end
+
+		lat_old = latency_client
 	end
 end
 
@@ -170,17 +190,19 @@ local function on_run_cmd(e)
 		return
 	end
 
-	local choken_n = e.chokedcommands
-	local latency, latency_server, latency_decl = getlatency()
+	local choked = e.chokedcommands
+	local latency_client, latency_server, latency_decl = getlatency()
 	
+	if inArr(interface.get(apr_mselect), actions[1]) then
+		interface.set(flag, not (interface.get(pingspike_hotkey) and interface.get(apr_pingthreshold) <= latency_client))
+	end
+
 	if inArr(interface.get(apr_mselect), actions[2]) and interface.get(apr_acthreshold) > 0 then
-	
 		if interface.get(pingspike_hotkey) and interface.get(apr_acthreshold) < latency_decl then
 			interface.set(accuracyboost, interface.get(apr_acboost))
 		else
 			interface.set(accuracyboost, "")
 		end
-
 	end
 end
 
