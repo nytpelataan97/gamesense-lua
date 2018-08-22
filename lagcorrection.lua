@@ -29,6 +29,18 @@ local cl = {
 	realtime = globals.realtime
 }
 
+local colors = {
+	{ 124, 195, 13 },
+	{ 176, 205, 10 },
+	{ 213, 201, 19 },
+	{ 220, 169, 16 },
+	{ 228, 126, 10 },
+	{ 229, 104, 8 },
+	{ 235, 63, 6 },
+	{ 237, 27, 3 },
+	{ 255, 0, 0 }
+}
+
 -- Some functions
 
 local function inArr(tab, val)
@@ -63,22 +75,15 @@ local function setMath(int, max, declspec)
 	return i
 end
 
-local function getColor(number, max)
-	local r, g, b
+local function getColor(number, max, inverse)
 	local i = setMath(number, max, 9)
-
-	if i == 9 then r, g, b = 255, 0, 0
-		elseif i == 8 then r, g, b = 237, 27, 3
-		elseif i == 7 then r, g, b = 235, 63, 6
-		elseif i == 6 then r, g, b = 229, 104, 8
-		elseif i == 5 then r, g, b = 228, 126, 10
-		elseif i == 4 then r, g, b = 220, 169, 16
-		elseif i == 3 then r, g, b = 213, 201, 19
-		elseif i == 2 then r, g, b = 176, 205, 10
-		elseif i <= 1 then r, g, b = 124, 195, 13
+	if inverse == true then
+		i = 9 - i
 	end
 
-	return r, g, b
+	if i < 1 then i = 1 end
+
+	return colors[i][1], colors[i][2], colors[i][3]
 end
 
 local function draw_indicator_circle(c, x, y, r, g, b, a, percentage, outline)
@@ -109,7 +114,11 @@ local apr_acboost = interface.multiselect("MISC", "Miscellaneous", "Accuracy boo
 
 -- Event Functions
 
-local factor, timechange, idm, lat_success, lat_old = 0, 0, 0, 0, 0
+local factor, timechange, nD = 0, 0, 0, 0
+local idm, lat_success, lat_old = 0, 0, 0
+
+local stime, numeric, z = 0, 7, 0
+
 local function on_paint(c)
 	if not interface.get(apr_active) or ent.get_prop(ent.get_local(), "m_iHealth") <= 0 then
 		return
@@ -126,7 +135,7 @@ local function on_paint(c)
 		factor = factor + d
 	end
 
-	local r, g, b = getColor(factor, 100)
+	local r, g, b = getColor(factor, 100, false)
 	if factor >= 1 then show = 1 end
 
 	if not (interface.get(flag) and interface.get(apr_pingthreshold) > latency_client) then
@@ -163,22 +172,32 @@ local function on_paint(c)
 	end
 
 	if show > 0 then
-		_r, _g, _b = 255, 255, 255
-
 		if interface.get(pingspike_hotkey) and lat_success > latency_client then
-			_r, _g, _b = 235, 63, 6
+			numeric = 7
 		else if not interface.get(pingspike_hotkey) then
-				_r, _g, _b = 255, 0, 0
+				numeric = 9
+			else
+				numeric = 1
 			end
 		end
-		
-		local y = cl.indicator(c, _r, _g, _b, alpha, "LAG") -- Lag Factor
+
+		if nD ~= numeric and stime < cl.realtime() then
+			if nD > numeric then z = -1 else z = 1 end
+			
+			stime = cl.realtime() + 0.4
+			nD = nD + z
+		end
+
+		local y = cl.indicator(c, colors[nD][1], colors[nD][2], colors[nD][3], alpha, "LAG") -- Lag Factor
 		draw_indicator_circle(c, 75, (y + 14), r, g, b, alpha, factor / 100)
 	end
 
 	if lat_old ~= latency_client then
 		if lat_old < latency_client then
 			lat_success = latency_client
+			numeric = 7
+		else
+			numeric = 1
 		end
 
 		lat_old = latency_client
