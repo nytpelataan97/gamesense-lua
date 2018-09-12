@@ -367,7 +367,7 @@ local varcached = {
 	res = nil
 }
 
-local alp = 0
+local alpha = 0
 local function on_paint(c)
 	if not interface.get(legitmode) or ent.get_prop(ent.get_local(), "m_iHealth") <= 0 then 
 		return
