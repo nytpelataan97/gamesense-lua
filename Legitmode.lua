@@ -14,6 +14,7 @@ local interface = {
 
 local cl = {
 	log = client.log,
+	exec = client.exec,
 	indicator = client.draw_indicator,
 	circle_outline = client.draw_circle_outline,
 	circle = client.draw_circle,
@@ -36,6 +37,7 @@ local near = { "Head", "Chest", "Stomach", "Arms", "Legs", "Feet" }
 
 local legitmode = interface.checkbox("MISC", "Settings", "Legit mode")
 local restrictions = interface.checkbox("MISC", "Settings", "Restrictions")
+local slowmo_correct = interface.checkbox("MISC", "Settings", "Slow motion correction")
 
 local nearesthitbox_hitscan = interface.multiselect("Misc", "Settings", "Nearest Hitboxes", near)
 
@@ -54,7 +56,6 @@ local indicators = interface.multiselect("Misc", "Settings", "Indicators", inds)
 local dynamicfov_color_picker = interface.colorpicker("MISC", "Settings", "Indicating Color", 0, 0, 0, 80)
 
 -- Reffers
-
 local rage, rage_hotkey = interface.ref("RAGE", "Aimbot", "Enabled")
 local rage_target = interface.ref("RAGE", "Aimbot", "Target selection")
 local rage_selection = interface.ref("RAGE", "Aimbot", "Target hitbox")
@@ -70,6 +71,7 @@ local aa_pitch = interface.ref("AA", "Anti-aimbot angles", "Pitch")
 local aa_yaw = interface.ref("AA", "Anti-aimbot angles", "Yaw")
 local aa_fake = interface.ref("AA", "Anti-aimbot angles", "Fake yaw")
 
+local slowmo, slowmo_hotkey = interface.ref("AA", "Other", "Slow motion")
 local legit, legit_hotkey = interface.ref("LEGIT", "Aimbot", "Enabled")
 
 local Hitscan = {
@@ -303,6 +305,15 @@ local function on_run_command(e)
 	choked = e.chokedcommands
 	nearestHitbox() 
 	doDynamicFOV()
+
+	if interface.get(slowmo_correct) then
+		if interface.get(slowmo) then
+			cl.exec("unbind shift")
+		else
+			cl.exec("bind shift +speed")
+		end
+
+	end
 
     if cache.rb_active == nil then cache.rb_active = interface.get(rage) end
 	if cache.aa_real == nil then cache.aa_real = interface.get(aa_yaw) end
