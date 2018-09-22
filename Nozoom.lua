@@ -15,11 +15,11 @@ local override_fov = ui.reference("MISC", "Miscellaneous", "Override FOV")
 local instant_scope = ui.reference("Visuals", "Effects", "Instant scope")
 
 local nozoom_toggle = ui.new_checkbox("VISUALS", "Effects", "No zoom")
-local nozoom_onfirst = ui.new_checkbox("VISUALS", "Effects", "Disable zoom on first scope")
+local nozoom_onsecond = ui.new_checkbox("VISUALS", "Effects", "Disable no zoom on second scope")
 local nozoom_combo = ui.new_combobox("VISUALS", "Effects", "Scope level", tbl(combo))
 
 local function getFov(f, level)
-	if ui_get(nozoom_onfirst) and level == 2 then
+	if ui_get(nozoom_onsecond) and level == 2 then
 		f = combo[ui_get(nozoom_combo)]
 	end
 
@@ -41,11 +41,11 @@ end
 local function m_visible()
 	local active = ui_get(nozoom_toggle)
 
-	ui.set_visible(nozoom_onfirst, active)
-	ui.set_visible(nozoom_combo, active and ui_get(nozoom_onfirst))
+	ui.set_visible(nozoom_onsecond, active)
+	ui.set_visible(nozoom_combo, active and ui_get(nozoom_onsecond))
 end
 
 m_visible()
 ui.set_callback(nozoom_toggle, m_visible)
-ui.set_callback(nozoom_onfirst, m_visible)
+ui.set_callback(nozoom_onsecond, m_visible)
 client.set_event_callback("paint", on_paint)
