@@ -17,12 +17,9 @@ local ent = {
 	uid_to_ent = client.userid_to_entindex
 }
 
-local IDLE, IN_ATTACK, IN_JUMP, IN_DUCK, IN_FORWARD, IN_BACK, IN_USE, IN_CANCEL, IN_LEFT, IN_RIGHT, IN_MOVELEFT, IN_MOVERIGHT, IN_ATTACK2, IN_RUN, IN_RELOAD, IN_ALT1, IN_ALT2, IN_SCORE, IN_WALK = 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072
-
 local rb, rb_toggle = ui.reference("RAGE", "Aimbot", "Enabled")
 local slowmo, slowmo_toggle = ui.reference("AA", "Other", "Slow motion")
 local rf = ui.reference("RAGE", "Other", "Double tap")
-
 
 local rapid = ui.new_checkbox("RAGE", "Other", "Rapid fire")
 local rapid_stuff = ui.new_checkbox("RAGE", "Other", "Disable rapid fire on stuff")
@@ -58,7 +55,6 @@ local function notAlive(entity)
 	return (entity == nil or ent.get_prop(entity, "m_lifeState") ~= 0)
 end
 
-local release_at = nil
 local number, timechange = 0, 0, 0
 local wpn_type = nil
 
@@ -66,28 +62,12 @@ local function on_item_equip(e)
 	if interface.get(rapid) and e.userid ~= nil and ent.uid_to_ent(e.userid) == ent.get_local() then
 		number = 0
 		wpn_type = e.weptype
-
-		if interface.get(rapid) and (e.item == "scar20" or e.item == "sg556") then
-			client.exec("-attack2; -lookatweapon; +attack2; +lookatweapon")
-			release_at = globals.realtime() + 0.1
-		else
-			if release_at ~= nil then
-				client.exec("-attack2; -lookatweapon")
-				release_at = nil
-			end
-		end
-
 	end
 end
 
 local timeon = 0
 local function on_paint(c)
 	if not interface.get(rapid) then return end
-	if release_at ~= nil and release_at < globals.realtime() then
-		release_at = nil
-		client.exec("-attack2; -lookatweapon; +lookatweapon; -lookatweapon")
-	end
-
 	if notAlive(ent.get_local()) or not interface.get(rapid) then
 		number = 0
 		return
@@ -137,7 +117,7 @@ local function on_paint(c)
 
 		if timeon > cl.realtime() then
 			local i = setMath(timeon - cl.realtime(), interface.get(rapid_time) / 10, 100)
-			draw_indicator_circle(c, 72.5, (y + 14), 53, 110, 254, alpha, i / 100)
+			draw_indicator_circle(c, 58, (y + 14), 53, 110, 254, alpha, i / 100)
 		end
 	end
 end
