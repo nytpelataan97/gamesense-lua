@@ -74,7 +74,8 @@ local lookup = {
 local reference = {
 	{ "RAGE", "Aimbot", "Target hitbox", ["options"] = { 
 			["type"] = "multiselect",
-			["select"] = { "Head", "Chest", "Stomach", "Arms", "Legs", "Feet" }
+			["select"] = { "Head", "Chest", "Stomach", "Arms", "Legs", "Feet" },
+			["bydefault"] = "Head"
 		}
 	},
 	{ "RAGE", "Aimbot", "Target selection", ["options"] = { 
@@ -114,7 +115,8 @@ local reference = {
 	},
 	{ "RAGE", "Aimbot", "Multi-point", ["options"] = { 
 			["type"] = "multiselect",
-			["select"] = { "Head", "Chest", "Stomach", "Arms", "Legs", "Feet" }
+			["select"] = { "Head", "Chest", "Stomach", "Arms", "Legs", "Feet" },
+			["bydefault"] = nil
 		}
 	},
 	{ "RAGE", "Aimbot", "Multi-point scale", ["options"] = { 
@@ -133,7 +135,8 @@ local reference = {
 	},
 	{ "RAGE", "Other", "Accuracy boost options", ["options"] = { 
 			["type"] = "multiselect",
-			["select"] = { "Refine shot", "Extended backtrack" }
+			["select"] = { "Refine shot", "Extended backtrack" },
+			["bydefault"] = nil
 		}
 	},
 	{ "RAGE", "Other", "Prefer body aim", ["options"] = { 
@@ -251,6 +254,11 @@ local function m_weapon(wpn)
 
 		elseif l_options.type == "multiselect" then
 			c[l_name] = interface.multiselect("RAGE", "Other", wpn .. ": " .. l_name, l_options.select)
+			if l_options.bydefault then
+
+				interface.set(c[l_name], l_options.bydefault)
+				
+			end
 		end
 	end
 
