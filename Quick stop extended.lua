@@ -1,9 +1,9 @@
 local ui_get, ui_set = ui.get, ui.set
 local g_Massive = { "Off", "On", "On + duck", "On + slide", "On + slide 2x", "On + minimal speed" }
 
-local quick_stop 		= ui.reference("RAGE", "Other", "Quick stop")
-local quick_stop_ext 	= ui.new_combobox("RAGE", "Other", "Quick stop extended", g_Massive)
-local quick_stop_cache 	= "On"
+local quick_stop = ui.reference("RAGE", "Other", "Quick stop")
+local quick_stop_ext = ui.new_combobox("RAGE", "Other", "Quick stop extended", g_Massive)
+local quick_stop_cache = "On"
 
 client.set_event_callback("run_command", function(c)
 	local g_pLocal = entity.get_local_player()
